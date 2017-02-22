@@ -170,7 +170,7 @@ void levelset::flow(double *u0, double final_t, index_t num_steps, double cfl_th
     }
 
     for (step = 0; step < num_steps; ++step) {
-#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3)
+#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3) num_threads(core)
         for (index_t i = 0; i < Nx; ++i) {
             for (index_t j = 0; j < Ny; ++j) {
                 for (index_t k = 0; k < Nz; ++k) {
@@ -188,7 +188,7 @@ void levelset::flow(double *u0, double final_t, index_t num_steps, double cfl_th
             }
         }
 #pragma omp barrier
-#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3)
+#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3) num_threads(core)
         for (index_t i = 0; i < Nx; ++i) {
             for (index_t j = 0; j < Ny; ++j) {
                 for (index_t k = 0; k < Nz; ++k) {
@@ -206,7 +206,7 @@ void levelset::flow(double *u0, double final_t, index_t num_steps, double cfl_th
             }
         }
 #pragma omp barrier
-#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3)
+#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3) num_threads(core)
         for (index_t i = 0; i < Nx; ++i) {
             for (index_t j = 0; j < Ny; ++j) {
                 for (index_t k = 0; k < Nz; ++k) {
@@ -272,7 +272,7 @@ void levelset::reinit(double*u, double *u0, double final_t, index_t num_steps, d
     }
 
     for (step = 0; step < num_steps; ++step) {
-#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3) num_threads(4)
+#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3) num_threads(core)
         for (index_t i = 0; i < Nx; ++i) {
             for (index_t j = 0; j < Ny; ++j) {
                 for (index_t k = 0; k < Nz; ++k) {
@@ -296,7 +296,7 @@ void levelset::reinit(double*u, double *u0, double final_t, index_t num_steps, d
         }
         // second stage
 #pragma omp barrier
-#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3)  num_threads(4)
+#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3)  num_threads(core)
         for (index_t i = 0; i < Nx; ++i) {
             for (index_t j = 0; j < Ny; ++j) {
                 for (index_t k = 0; k < Nz; ++k) {
@@ -319,7 +319,7 @@ void levelset::reinit(double*u, double *u0, double final_t, index_t num_steps, d
             }
         }
 #pragma omp barrier
-#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3)  num_threads(4)
+#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3)  num_threads(core)
         // third stage
         for (index_t i = 0; i < Nx; ++i) {
             for (index_t j = 0; j < Ny; ++j) {
