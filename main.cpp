@@ -7,7 +7,10 @@
 int main() {
 
 
-    Molecule mol; mol.load("../data/2aid.pqr");
+    Molecule mol;
+
+//    mol.load("../data/2aid.pqr");
+    mol.load("../data/1hje.pqr");
     scalar_t s = mol.centralize(200.0); mol.getCenter();
     scalar_t pr = 1.4 * s;
 
