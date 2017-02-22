@@ -19,6 +19,27 @@ levelset::~levelset() {
     free(phi);
 }
 
+
+void levelset::expand(Molecule &mol, double pr) {
+    for (index_t aId = 0; aId < mol.centers.size();++aId) {
+        int r = (int)((mol.radii[aId] + pr)/dx) + WENO;
+        int icx = (int)((mol.centers[aId].data[0] - sx) / dx);
+        int icy = (int)((mol.centers[aId].data[1] - sy) / dx);
+        int icz = (int)((mol.centers[aId].data[2] - sz) / dx);
+        for (int a = icx - r; a <= icx + r; ++a) {
+            for (int b = icy - r; b <= icy + r; ++b) {
+                for (int c = icz - r; c<= icz + r; ++c) {
+                    point grid_p = {sx + a * dx, sy + b * dx, sz + c * dx};
+                    scalar_t dist = (mol.radii[aId] + pr) - norm(grid_p - mol.centers[aId]) ;
+
+                    dist = max(dist, get(phi, a, b,c));
+                    set(dist, phi, a, b, c);
+                }
+            }
+        }
+    }
+}
+
 double levelset::getNorm(point &Dun, point &Dup) {
     for (int i = 0; i < DIM; ++i) {
         Dun.data[i] = max((Dun.data[i] > 0. ? Dun.data[i] : 0.), (Dup.data[i] < 0. ? -Dup.data[i] : 0.));
@@ -139,12 +160,17 @@ void levelset::flow(double *u0, double final_t, index_t num_steps, double cfl_th
     index_t step = 0;
     point Dup, Dun;
 
+    const int core = omp_get_max_threads();
 
-    double window[4][21];
+    omp_set_num_threads(core);
+    double** window = (double**)malloc(core * sizeof(double*));
+
+    for (int i = 0; i < core; ++i) {
+        window[i] = (double*)malloc(DIM * WENO * sizeof(double));
+    }
 
     for (step = 0; step < num_steps; ++step) {
-//        std::cout << "flow : " << step << std::endl;
-#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3) num_threads(4)
+#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3)
         for (index_t i = 0; i < Nx; ++i) {
             for (index_t j = 0; j < Ny; ++j) {
                 for (index_t k = 0; k < Nz; ++k) {
@@ -162,7 +188,7 @@ void levelset::flow(double *u0, double final_t, index_t num_steps, double cfl_th
             }
         }
 #pragma omp barrier
-#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3)  num_threads(4)
+#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3)
         for (index_t i = 0; i < Nx; ++i) {
             for (index_t j = 0; j < Ny; ++j) {
                 for (index_t k = 0; k < Nz; ++k) {
@@ -180,7 +206,7 @@ void levelset::flow(double *u0, double final_t, index_t num_steps, double cfl_th
             }
         }
 #pragma omp barrier
-#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3) num_threads(4)
+#pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3)
         for (index_t i = 0; i < Nx; ++i) {
             for (index_t j = 0; j < Ny; ++j) {
                 for (index_t k = 0; k < Nz; ++k) {
@@ -201,6 +227,12 @@ void levelset::flow(double *u0, double final_t, index_t num_steps, double cfl_th
     }
 
     free(u1);free(u2);
+
+
+    for (int i = 0; i < core; ++i) {
+        free(window[i]);
+    }
+    free(window);
 }
 
 
@@ -229,9 +261,15 @@ void levelset::reinit(double*u, double *u0, double final_t, index_t num_steps, d
 
     index_t step = 0;
 
-//    double sign = 1.0;
-//    double normDu = 1.0;
-    double window[4][21];
+    const int core = omp_get_max_threads();
+
+    omp_set_num_threads(core);
+
+    double** window = (double**)malloc(core * sizeof(double*));
+
+    for (int i = 0; i < core; ++i) {
+        window[i] = (double*)malloc(DIM * WENO * sizeof(double));
+    }
 
     for (step = 0; step < num_steps; ++step) {
 #pragma omp parallel for private(Dup, Dun) schedule(static) collapse(3) num_threads(4)
@@ -308,4 +346,9 @@ void levelset::reinit(double*u, double *u0, double final_t, index_t num_steps, d
     }
 
     free(u1);free(u2);
+
+    for (int i = 0; i < core; ++i) {
+        free(window[i]);
+    }
+    free(window);
 }

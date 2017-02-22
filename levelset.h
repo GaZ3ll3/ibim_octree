@@ -10,6 +10,7 @@
 
 
 #include "point.h"
+#include "molecule.h"
 
 class levelset {
 public:
@@ -36,6 +37,8 @@ public:
 
     double get(double* u, index_t i, index_t j, index_t k);
     void set(double val, double* u, index_t i, index_t j, index_t k);
+
+    void expand(Molecule& m, double pr);
 
     void flow(double* phi0, double final_t, index_t num_steps, double cfl);
     void reinit(double* u, double* phi0, double final_t, index_t num_steps, double cfl);
